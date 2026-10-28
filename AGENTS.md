@@ -2,8 +2,6 @@
 
 Consignes de comportement pour réduire les erreurs courantes des LLM en programmation. À combiner avec les instructions propres au projet.
 
-**Articulation avec `RULES.md` :** les règles globales de l'utilisateur (`RULES.md`, chargé par sa configuration OpenCode globale) fixent la communication, la gestion des questions et les plans d'action. Ce fichier les complète pour le code et ne les répète pas. En cas de conflit, `RULES.md` prévaut.
-
 **Compromis :** ces consignes privilégient la prudence plutôt que la vitesse.
 
 ## Environnement
@@ -26,7 +24,6 @@ Avant d'implémenter :
 
 **Le minimum de code qui résout le problème. Rien de spéculatif.**
 
-- Lisibilité et maintenance priment sur la sur-ingénierie (voir `RULES.md`, « Code et Développement »).
 - Aucune fonctionnalité au-delà de ce qui est demandé.
 - Aucune abstraction pour du code à usage unique.
 - Aucune « flexibilité » ou « configurabilité » non demandée.
