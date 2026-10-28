@@ -3,14 +3,18 @@
 Base de harnais pour OpenCode, à réutiliser pour chaque nouveau projet de code.
 
 ## Ce qu'elle apporte
-- **`AGENTS.md`** : consignes de comportement pour l'IA (réfléchir avant de coder, simplicité, modifications ciblées, objectifs vérifiables) et règles de mémoire.
-- **`memoire/`** : la documentation du projet, découpée en petits fichiers lus à la demande.
+- **`AGENTS.md`** : environnement (Windows, PowerShell restreint, secrets), consignes de comportement pour le code (réfléchir avant de coder, simplicité, modifications ciblées, objectifs vérifiables) et règles de mémoire. Il complète `RULES.md` (règles globales de l'utilisateur) sans le répéter.
+- **`memoire/`** : la documentation du projet, découpée en petits fichiers lus à la demande. `architecture.md` et `principes.md` (commandes de test/lint/build, principes non négociables, conventions, interdits) sont fournis à compléter.
 - **`memoire/ROUTEUR.md`** : index généré qui dit à l'IA quel fichier lire et quand. Chargé à chaque session via `opencode.json`.
 - **`scripts/routeur.ps1`** : génère le routeur et vérifie la cohérence de la mémoire.
+- **`opencode.json`** : charge le routeur et pose des permissions (lecture et édition des `.env` interdites, confirmation avant `git push`, `git reset --hard`, `git clean` et suppressions).
+- **`.github/workflows/memoire.yml`** : lance la vérification à chaque push et pull request.
 
 ## Démarrer un projet
+Prérequis : un fichier de règles globales `RULES.md`, chargé par `~/.config/opencode/opencode.json` (champ `instructions`). `AGENTS.md` s'appuie dessus pour la communication, les questions et les plans d'action.
+
 1. Sur GitHub : **Use this template** (ou clone ce dépôt dans un nouveau dossier, puis supprime `.git` et relance `git init`).
-2. Remplis `memoire/architecture.md` : ce que fait le projet, ses fichiers, sa configuration.
+2. Remplis `memoire/architecture.md` (ce que fait le projet, ses fichiers, sa configuration) et `memoire/principes.md` (commandes, principes, conventions, interdits).
 3. Pour chaque sujet du projet, copie `memoire/_modele.md` vers `memoire/<sujet>.md` et remplis l'en-tête (`quand_lire`, `couvre`) puis le contenu.
 4. Régénère le routeur :
    ```powershell
@@ -22,7 +26,13 @@ Base de harnais pour OpenCode, à réutiliser pour chaque nouveau projet de code
 | Action | Commande |
 |---|---|
 | Régénérer le routeur après un changement dans `memoire/` | `.\scripts\routeur.ps1` |
-| Vérifier la cohérence (routeur à jour, chemins `couvre` existants, `architecture.md` présent) | `.\scripts\routeur.ps1 -Verifier` |
+| Vérifier la cohérence | `.\scripts\routeur.ps1 -Verifier` |
+
+`-Verifier` échoue si :
+- `memoire/ROUTEUR.md` n'est pas à jour ;
+- un chemin de `couvre` n'existe pas ;
+- `memoire/architecture.md` est absent ;
+- un fichier suivi par Git n'est cité dans aucun `couvre` (un chemin finissant par `/` couvre un dossier) ni dans `memoire/_ignore.txt`. Seuls les fichiers déjà ajoutés à Git (`git add`) sont contrôlés.
 
 ## Format d'un fichier de mémoire
 ```

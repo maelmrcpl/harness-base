@@ -1,6 +1,7 @@
 ﻿# Génère memoire/ROUTEUR.md à partir des en-têtes des fichiers de memoire/.
 #   .\scripts\routeur.ps1             écrit memoire/ROUTEUR.md
-#   .\scripts\routeur.ps1 -Verifier   contrôle la cohérence sans rien écrire (code retour 1 si erreur)
+#   .\scripts\routeur.ps1 -Verifier   contrôle la cohérence sans rien écrire (code retour 1 si erreur) :
+#                                     routeur à jour, chemins 'couvre' existants, fichiers Git non couverts
 # Uniquement des cmdlets : compatible avec le mode PowerShell restreint (Constrained Language Mode).
 param(
     [string]$Racine = (Split-Path $PSScriptRoot -Parent),
@@ -23,6 +24,7 @@ function Lire-EnTete($fichier) {
 }
 
 $lignes = @()
+$couverts = @()
 $fichiers = Get-ChildItem $dossier -Filter *.md | Where-Object { $_.Name -ne "ROUTEUR.md" -and -not $_.Name.StartsWith("_") } | Sort-Object Name
 
 if (-not (Test-Path (Join-Path $dossier "architecture.md"))) {
@@ -38,6 +40,7 @@ foreach ($f in $fichiers) {
     if ($entete["couvre"]) {
         foreach ($chemin in $entete["couvre"] -split ',') {
             $chemin = $chemin.Trim()
+            if ($chemin) { $couverts += $chemin.Replace('\', '/') }
             if ($chemin -and -not (Test-Path (Join-Path $Racine $chemin))) {
                 $erreurs += "$($f.Name) : 'couvre' cite un chemin qui n'existe pas : $chemin"
             }
@@ -69,6 +72,24 @@ Aucune ligne ne correspond : lis ``memoire/architecture.md``, avertis l'utilisat
 $contenu = ($contenu -replace '\r?\n', "`n").TrimEnd() + "`n"
 
 if ($Verifier) {
+    # Tout fichier suivi par Git doit être cité dans un 'couvre' (un chemin finissant par / couvre un dossier)
+    # ou correspondre à un motif de memoire/_ignore.txt. Ignoré s'il n'y a pas de dépôt Git.
+    if (Get-Command git -ErrorAction SilentlyContinue) {
+        $suivis = git -C $Racine ls-files 2>$null
+        if ($LASTEXITCODE -eq 0 -and $suivis) {
+            $motifs = @()
+            $fichierIgnore = Join-Path $dossier "_ignore.txt"
+            if (Test-Path $fichierIgnore) {
+                $motifs = Get-Content $fichierIgnore -Encoding UTF8 | Where-Object { $_.Trim() -and -not $_.StartsWith("#") }
+            }
+            foreach ($suivi in $suivis) {
+                $ignore = $false
+                foreach ($motif in $motifs) { if ($suivi -like $motif.Trim()) { $ignore = $true } }
+                foreach ($c in $couverts) { if ($suivi -eq $c -or ($c.EndsWith("/") -and $suivi.StartsWith($c))) { $ignore = $true } }
+                if (-not $ignore) { $erreurs += "Fichier non couvert par la mémoire : $suivi (l'ajouter à un 'couvre' ou à memoire/_ignore.txt)" }
+            }
+        }
+    }
     $actuel = ""
     if (Test-Path $routeur) { $actuel = (Get-Content $routeur -Raw -Encoding UTF8) -replace '\r?\n', "`n" }
     if ($actuel -ne $contenu) { $erreurs += "memoire/ROUTEUR.md n'est pas à jour : lancer .\scripts\routeur.ps1" }
