@@ -28,11 +28,18 @@ Prérequis : un fichier de règles globales `RULES.md`, chargé par `~/.config/o
 | Régénérer le routeur après un changement dans `memoire/` | `.\scripts\routeur.ps1` |
 | Vérifier la cohérence | `.\scripts\routeur.ps1 -Verifier` |
 
-`-Verifier` échoue si :
+`-Verifier` **échoue** (code 1) si :
 - `memoire/ROUTEUR.md` n'est pas à jour ;
 - un chemin de `couvre` n'existe pas ;
 - `memoire/architecture.md` est absent ;
-- un fichier suivi par Git n'est cité dans aucun `couvre` (un chemin finissant par `/` couvre un dossier) ni dans `memoire/_ignore.txt`. Seuls les fichiers déjà ajoutés à Git (`git add`) sont contrôlés.
+- un fichier suivi par Git n'est cité dans aucun `couvre` (un chemin finissant par `/` couvre un dossier) ni dans `memoire/_ignore.txt` ;
+- un fichier suivi par Git contient un secret probable (clé `sk-`, jeton GitHub, clé AWS, clé privée, en-tête `Bearer`). Une ligne contenant `secret-ok` est ignorée (faux positif assumé).
+
+`-Verifier` **avertit** (sans échouer) si :
+- un fichier de mémoire est plus ancien que le code qu'il couvre (dates du dernier commit Git). Pour lever l'avertissement : relire le fichier, puis le committer même sans changement ;
+- `AGENTS.md` + `ROUTEUR.md` dépassent 10 000 caractères, ou un fichier de mémoire dépasse 6 000 caractères (seuils en tête de `scripts/routeur.ps1`).
+
+Seuls les fichiers déjà ajoutés à Git (`git add`) sont contrôlés. Hors dépôt Git, ces contrôles sont ignorés.
 
 ## Format d'un fichier de mémoire
 ```
@@ -46,11 +53,25 @@ Faits vérifiables dans le code.
 - Les fichiers dont le nom commence par `_` (comme `_modele.md`) ne sont pas listés dans le routeur.
 - `memoire/architecture.md` est obligatoire : c'est le fichier de repli quand aucune ligne du routeur ne correspond.
 
-## Ajouter des skills et des commandes
+## Skills, agent et commandes fournis
+| Commande | Rôle |
+|---|---|
+| `/onboard` | Sur un projet **existant** : lit le code, propose un découpage de la mémoire, puis (après accord) remplit `memoire/`. |
+| `/plan <tâche>` | Cadre une tâche : écrit un plan court dans `plan/`, attend la validation, puis propose step by step ou one shot. |
+| `/review` | Relecture du diff par un sous-agent en lecture seule (`.opencode/agents/reviewer.md`), au contexte neuf. |
+
+## Ajouter ses propres skills et commandes
 OpenCode les lit directement dans le projet :
-- `.opencode/skills/<nom>/SKILL.md`
+- `.opencode/skills/<nom>/SKILL.md` (le `name` doit être égal au nom du dossier)
 - `.opencode/commands/<nom>.md`
+- `.opencode/agents/<nom>.md`
 
 ## Contraintes
+- OpenCode v2 (testé avec la v2.1.2). `opencode.json`, l'agent et la commande `/review` utilisent le format natif v2 (`permissions` en liste, `shell`, `subagent`). Vérifier ce qu'OpenCode lit réellement :
+  ```powershell
+  opencode debug config
+  opencode debug agents --print-logs --log-level warn
+  ```
+- En v2, l'accès à un dossier hors du projet (`external_directory`) est autorisé par défaut. Pour être prévenu avant, ajouter dans `opencode.json` : `{ "action": "external_directory", "resource": "*", "effect": "ask" }`.
 - Windows, PowerShell 5.1. Le script n'utilise que des cmdlets : il fonctionne en mode PowerShell restreint (Constrained Language Mode).
 - `memoire/ROUTEUR.md` est écrit avec un BOM UTF-8 (limite de PowerShell 5.1). Sans effet sur la lecture.
