@@ -136,6 +136,6 @@ if ($LASTEXITCODE -ne 0) { Write-Host "Routeur non généré : compléter memoir
 
 Write-Host ""
 Write-Host "Étapes suivantes :"
-Write-Host "  1. Compléter memoire/architecture.md et memoire/principes.md (ou lancer /onboard dans OpenCode)"
+Write-Host "  1. Compléter memoire/architecture.md et memoire/principes.md (ou lancer /onboard create dans OpenCode, session neuve)"
 Write-Host "  2. .\scripts\routeur.ps1 -Verifier"
 Write-Host "  3. Relire le diff (git status, git diff) avant de committer"

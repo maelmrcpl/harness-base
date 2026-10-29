@@ -26,13 +26,13 @@ cd C:\chemin\de\harness-base
 
 Le script affiche un rapport (créés, mis à jour, fusionnés, inchangés, conservés, avertissements), tente de générer le routeur et ne supprime jamais rien. Il avertit si `AGENTS.md` existe déjà, si `opencode.json` est invalide, utilise l'ancien champ `permission` (v1) ou contient des chemins absolus.
 
-Si le projet a déjà un `AGENTS.md` ou des fichiers dans `memoire/` qui ne suivent pas ce format, les supprimer **avant** l'installation pour repartir de la base (ou les migrer : en-tête `quand_lire` et `couvre`). Puis lancer `/onboard` dans OpenCode pour remplir la mémoire.
+Si le projet a déjà un `AGENTS.md` ou des fichiers dans `memoire/` qui ne suivent pas ce format, les supprimer **avant** l'installation pour repartir de la base (ou les migrer : en-tête `quand_lire`, `couvre` et `verifie`). Puis lancer `/onboard create` dans OpenCode (session neuve) pour remplir la mémoire.
 
 ### Projet neuf : le modèle GitHub
 
 1. Sur GitHub : **Use this template** (ou clone ce dépôt dans un nouveau dossier, puis supprime `.git` et relance `git init`).
 2. Remplis `memoire/architecture.md` (ce que fait le projet, ses fichiers, sa configuration) et `memoire/principes.md` (commandes, principes, conventions, interdits).
-3. Pour chaque sujet du projet, copie `memoire/_modele.md` vers `memoire/<sujet>.md` et remplis l'en-tête (`quand_lire`, `couvre`) puis le contenu.
+3. Pour chaque sujet du projet, copie `memoire/_modele.md` vers `memoire/<sujet>.md` et remplis l'en-tête (`quand_lire`, `couvre`, `verifie`) puis le contenu. Ou lance `/onboard create` dans OpenCode pour que le skill le fasse à partir du code.
 4. Régénère le routeur :
    ```powershell
    .\scripts\routeur.ps1
@@ -54,7 +54,7 @@ Si le projet a déjà un `AGENTS.md` ou des fichiers dans `memoire/` qui ne suiv
 - un fichier suivi par Git contient un secret probable (clé `sk-`, jeton GitHub, clé AWS, clé privée, en-tête `Bearer`). Une ligne contenant `secret-ok` est ignorée (faux positif assumé).
 
 `-Verifier` **avertit** (sans échouer) si :
-- un fichier de mémoire est plus ancien que le code qu'il couvre (dates du dernier commit Git). Pour lever l'avertissement : relire le fichier, puis le committer même sans changement ;
+- un fichier de mémoire est plus ancien que le code qu'il couvre : le code a été commité **après** la date `verifie: AAAA-MM-JJ` de son en-tête (comparaison au jour près). Sans champ `verifie`, la référence est le dernier commit du fichier de mémoire. Pour lever l'avertissement : relire le fichier avec son code, puis mettre `verifie` à la date du jour (`/onboard update` le fait). Un `verifie` mal écrit déclenche aussi un avertissement ;
 - `AGENTS.md` + `ROUTEUR.md` dépassent 10 000 caractères, ou un fichier de mémoire dépasse 6 000 caractères (seuils en tête de `scripts/routeur.ps1`).
 
 Seuls les fichiers déjà ajoutés à Git (`git add`) sont contrôlés. Hors dépôt Git, ces contrôles sont ignorés.
@@ -64,17 +64,21 @@ Seuls les fichiers déjà ajoutés à Git (`git add`) sont contrôlés. Hors dé
 ---
 quand_lire: situations où lire ce fichier (fichier modifié, erreur rencontrée, question posée)
 couvre: fichier1.py, dossier/fichier2.py
+verifie: AAAA-MM-JJ
 ---
 # Titre
 Faits vérifiables dans le code.
 ```
+- `verifie` : date à laquelle le fichier a été confronté au code qu'il couvre. Elle ne change que lorsque quelqu'un (ou `/onboard update`) a réellement relu le code avec le fichier.
 - Les fichiers dont le nom commence par `_` (comme `_modele.md`) ne sont pas listés dans le routeur.
 - `memoire/architecture.md` est obligatoire : c'est le fichier de repli quand aucune ligne du routeur ne correspond.
 
 ## Skills, agent et commandes fournis
 | Commande | Rôle |
 |---|---|
-| `/onboard` | Sur un projet **existant** : lit le code, propose un découpage de la mémoire, puis (après accord) remplit `memoire/`. |
+| `/onboard create` | **Première initialisation** de la mémoire d'un projet existant : lit le code, propose un découpage, puis (après accord) remplit `memoire/`. Refuse si la mémoire est déjà renseignée, sauf confirmation. |
+| `/onboard update` | **Mise à jour ciblée** : compare la mémoire existante au code qu'elle couvre, ne propose que les corrections importantes (maximum 10), puis met à jour `verifie`. À lancer dans une session neuve. |
+| `/onboard` | Sans mode : constate l'état de `memoire/` et demande lequel lancer. |
 | `/plan <tâche>` | Cadre une tâche : écrit un plan court dans `plan/`, attend la validation, puis propose step by step ou one shot. |
 | `/review` | Relecture du diff par un sous-agent en lecture seule (`.opencode/agents/reviewer.md`), au contexte neuf. |
 | `/save-session` | Résume la session en cours dans un fichier markdown. |
