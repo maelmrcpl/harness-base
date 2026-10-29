@@ -59,6 +59,7 @@ Faits vérifiables dans le code.
 | `/onboard` | Sur un projet **existant** : lit le code, propose un découpage de la mémoire, puis (après accord) remplit `memoire/`. |
 | `/plan <tâche>` | Cadre une tâche : écrit un plan court dans `plan/`, attend la validation, puis propose step by step ou one shot. |
 | `/review` | Relecture du diff par un sous-agent en lecture seule (`.opencode/agents/reviewer.md`), au contexte neuf. |
+| `save-session` | Résume la session en cours dans un fichier markdown. |
 
 ## Ajouter ses propres skills et commandes
 OpenCode les lit directement dans le projet :
