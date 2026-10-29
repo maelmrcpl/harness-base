@@ -118,7 +118,7 @@ if ($Verifier) {
         $motifs = Get-Content $fichierIgnore -Encoding UTF8 | Where-Object { $_.Trim() -and -not $_.StartsWith("#") }
     }
     foreach ($suivi in $suivis) {
-        $ignore = $false
+        $ignore = ($suivi -eq ".harness-base")
         foreach ($motif in $motifs) { if ($suivi -like $motif.Trim()) { $ignore = $true } }
         foreach ($c in $couverts) { if ($suivi -eq $c -or ($c.EndsWith("/") -and $suivi.StartsWith($c))) { $ignore = $true } }
         if (-not $ignore) { $erreurs += "Fichier non couvert par la mémoire : $suivi (l'ajouter à un 'couvre' ou à memoire/_ignore.txt)" }

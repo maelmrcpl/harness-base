@@ -6,5 +6,6 @@ AGENTS.md
 memoire/*
 scripts/routeur.ps1
 scripts/installer.ps1
+scripts/mettre-a-jour-projets.ps1
 .github/*
 .opencode/*

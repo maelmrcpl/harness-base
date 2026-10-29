@@ -28,6 +28,8 @@ Le script affiche un rapport (créés, mis à jour, fusionnés, inchangés, cons
 
 Si le projet a déjà un `AGENTS.md` ou des fichiers dans `memoire/` qui ne suivent pas ce format, les supprimer **avant** l'installation pour repartir de la base (ou les migrer : en-tête `quand_lire`, `couvre` et `verifie`). Puis lancer `/onboard create` dans OpenCode (session neuve) pour remplir la mémoire.
 
+Le script écrit aussi un fichier marqueur `.harness-base` (source, version = hash court du commit de `harness-base`, date). Il sert à la mise à jour des projets, voir plus bas. Un projet créé avec le modèle GitHub l'embarque déjà (version `inconnue` jusqu'à la première mise à jour).
+
 ### Projet neuf : le modèle GitHub
 
 1. Sur GitHub : **Use this template** (ou clone ce dépôt dans un nouveau dossier, puis supprime `.git` et relance `git init`).
@@ -38,6 +40,28 @@ Si le projet a déjà un `AGENTS.md` ou des fichiers dans `memoire/` qui ne suiv
    .\scripts\routeur.ps1
    ```
 5. Lance OpenCode dans le dossier du projet.
+
+## Mettre à jour les projets quand la base change
+Après un `git pull` dans `harness-base` :
+```powershell
+cd C:\chemin\de\harness-base
+.\scripts\mettre-a-jour-projets.ps1                           # statut : rien n'est écrit
+.\scripts\mettre-a-jour-projets.ps1 -Appliquer                # branche + mise à jour, changements non commités
+.\scripts\mettre-a-jour-projets.ps1 -Appliquer -Committer     # idem, avec un commit local
+.\scripts\mettre-a-jour-projets.ps1 -Racines D:\code,E:\perso # autres dossiers à explorer (défaut : le dossier parent de harness-base)
+```
+Le script cherche les fichiers `.harness-base` sous les dossiers racines (2 niveaux de profondeur) et affiche, pour chaque projet, la version installée contre la version actuelle de la base, l'état Git, et les fichiers que la base a modifiés depuis.
+
+Avec `-Appliquer`, pour chaque projet **en retard, dépôt Git, arbre propre** : création d'une branche `harness-update-AAAA-MM-JJ` (suffixe `-2`, `-3`… si elle existe), puis `scripts/installer.ps1 -MettreAJour`. Les projets dont l'arbre n'est pas propre, qui ne sont pas des dépôts Git ou dont la version est absente du clone de la base sont ignorés, avec la raison. Le script **ne fait jamais de `git push`** et ne modifie jamais la branche d'origine.
+
+| À savoir | Détail |
+|---|---|
+| Fichiers gérés (`scripts/routeur.ps1`, CI, `.opencode/`, `memoire/_modele.md`) | **Remplacés** par la version de la base, même s'ils ont été personnalisés dans le projet : relire le diff avant de committer. |
+| Fichiers propres au projet (`AGENTS.md`, `memoire/architecture.md`, `memoire/principes.md`, `memoire/_ignore.txt`) | **Jamais écrasés.** Si la base les a modifiés, le script le signale avec la commande `git diff` pour voir la différence. |
+| Fichiers supprimés ou renommés dans la base | **Non supprimés** dans les projets. |
+| Prérequis | `harness-base` doit être un dépôt Git sans modification non commitée pour `-Appliquer` (sinon la version enregistrée serait fausse). |
+
+Pour annuler dans un projet (arbre propre avant la mise à jour) : `git switch <branche d'origine>`, `git restore .`, `git clean -fd`, `git branch -D harness-update-...`.
 
 ## Au quotidien
 | Action | Commande |

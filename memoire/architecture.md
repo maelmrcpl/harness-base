@@ -14,6 +14,7 @@ couvre: opencode.json, .gitignore, .github/workflows/memoire.yml, .opencode/
 | `.opencode/skills/` | Skills `onboard` (créer ou mettre à jour la mémoire : `/onboard create` ou `/onboard update`), `plan` (cadrer avant de coder), `review` (relecture), `save-session`. |
 | `.opencode/agents/reviewer.md` | Sous-agent relecteur en lecture seule, utilisé par `/review`. |
 | `.opencode/commands/` | Commandes `/onboard` (arguments : mode puis contexte), `/plan`, `/review`, `/save-session`. Chacune charge le skill du même nom. |
+| `.harness-base` | Marqueur de la version de harness-base installée (source, version, date). Écrit par le script d'installation de la base, lu par son script de mise à jour des projets. Ne pas modifier à la main. |
 
 ## Configuration
 - `.gitignore` : fichiers exclus du dépôt.

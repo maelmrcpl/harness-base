@@ -20,6 +20,24 @@ $crees = @(); $misAJour = @(); $inchanges = @(); $ignores = @(); $fusions = @();
 
 function Contenu($chemin) { return (Get-Content $chemin -Raw -Encoding UTF8) -replace '\r?\n', "`n" }
 
+function Lire-Version($chemin) {
+    if (-not (Test-Path $chemin)) { return "" }
+    foreach ($ligne in Get-Content $chemin -Encoding UTF8) { if ($ligne -match '^version:\s*(\S+)') { return $Matches[1] } }
+    return ""
+}
+
+# Version de harness-base utilisée (hash court du commit), pour le marqueur .harness-base
+$hashBase = "inconnue"; $sourceBase = "inconnue"; $baseModifiee = $false
+if (Get-Command git -ErrorAction SilentlyContinue) {
+    $hash = git -C $base rev-parse --short HEAD 2>$null
+    if ($LASTEXITCODE -eq 0 -and $hash) {
+        $hashBase = "$hash".Trim()
+        if (git -C $base status --porcelain 2>$null) { $baseModifiee = $true }
+        $url = git -C $base remote get-url origin 2>$null
+        if ($LASTEXITCODE -eq 0 -and $url) { $sourceBase = "$url".Trim() }
+    }
+}
+
 function Copier($relatif, $ecraser) {
     $source = Join-Path $base $relatif
     $dest = Join-Path $cible $relatif
@@ -114,6 +132,27 @@ if (-not (Test-Path $jsonCible)) {
             $avertissements += "opencode.json contient des chemins absolus (à adapter s'ils pointent vers un autre dossier, par exemple l'ancien emplacement du projet) : " + ($absolus -join " ; ")
         }
     }
+}
+
+# Marqueur .harness-base : version de la base installée, lue par scripts/mettre-a-jour-projets.ps1
+$marqueur = Join-Path $cible ".harness-base"
+$versionInstallee = Lire-Version $marqueur
+$ecrire = $false
+if (-not (Test-Path $marqueur)) { $ecrire = $true }
+elseif ($hashBase -ne "inconnue" -and (-not $versionInstallee -or $versionInstallee -eq "inconnue")) { $ecrire = $true }
+elseif ($MettreAJour -and $hashBase -ne "inconnue" -and $versionInstallee -ne $hashBase) { $ecrire = $true }
+if ($ecrire) {
+    $existait = Test-Path $marqueur
+    Set-Content $marqueur -Encoding Ascii -Value @(
+        "# Projet lie a harness-base. Gere par scripts/installer.ps1 : ne pas modifier a la main.",
+        "source: $sourceBase",
+        "version: $hashBase",
+        "date: $(Get-Date -Format 'yyyy-MM-dd')"
+    )
+    if ($existait) { $misAJour += ".harness-base (version $hashBase)" } else { $crees += ".harness-base" }
+} else { $inchanges += ".harness-base" }
+if ($baseModifiee) {
+    $avertissements += "harness-base a des modifications non commitées : la version enregistrée ($hashBase) ne les contient pas"
 }
 
 # Rapport
