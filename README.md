@@ -13,6 +13,23 @@ Base de harnais pour OpenCode, à réutiliser pour chaque nouveau projet de code
 ## Démarrer un projet
 Prérequis : un fichier de règles globales `RULES.md`, chargé par `~/.config/opencode/opencode.json` (champ `instructions`). `AGENTS.md` s'appuie dessus pour la communication, les questions et les plans d'action.
 
+### Projet existant (ou dossier déjà créé) : le script d'installation
+```powershell
+cd C:\chemin\de\harness-base
+.\scripts\installer.ps1 -Cible C:\chemin\du\projet
+```
+| Catégorie | Fichiers | Comportement |
+|---|---|---|
+| Gérés par la base | `scripts/routeur.ps1`, `.github/workflows/memoire.yml`, `.opencode/`, `memoire/_modele.md` | Copiés s'ils n'existent pas. Remplacés par la version de la base avec `-MettreAJour`. |
+| Initiaux (propriété du projet) | `AGENTS.md`, `memoire/architecture.md`, `memoire/principes.md`, `memoire/_ignore.txt` | Copiés seulement s'ils n'existent pas, jamais écrasés. |
+| Fusionnés | `opencode.json` (instruction `memoire/ROUTEUR.md` et règles de permissions manquantes, le reste est conservé), `.gitignore` (lignes manquantes) | Relancer ne change rien. |
+
+Le script affiche un rapport (créés, mis à jour, fusionnés, inchangés, conservés, avertissements), tente de générer le routeur et ne supprime jamais rien. Il avertit si `AGENTS.md` existe déjà, si `opencode.json` est invalide, utilise l'ancien champ `permission` (v1) ou contient des chemins absolus.
+
+Si le projet a déjà un `AGENTS.md` ou des fichiers dans `memoire/` qui ne suivent pas ce format, les supprimer **avant** l'installation pour repartir de la base (ou les migrer : en-tête `quand_lire` et `couvre`). Puis lancer `/onboard` dans OpenCode pour remplir la mémoire.
+
+### Projet neuf : le modèle GitHub
+
 1. Sur GitHub : **Use this template** (ou clone ce dépôt dans un nouveau dossier, puis supprime `.git` et relance `git init`).
 2. Remplis `memoire/architecture.md` (ce que fait le projet, ses fichiers, sa configuration) et `memoire/principes.md` (commandes, principes, conventions, interdits).
 3. Pour chaque sujet du projet, copie `memoire/_modele.md` vers `memoire/<sujet>.md` et remplis l'en-tête (`quand_lire`, `couvre`) puis le contenu.
@@ -32,6 +49,7 @@ Prérequis : un fichier de règles globales `RULES.md`, chargé par `~/.config/o
 - `memoire/ROUTEUR.md` n'est pas à jour ;
 - un chemin de `couvre` n'existe pas ;
 - `memoire/architecture.md` est absent ;
+- `opencode.json` n'est pas un JSON valide (OpenCode l'ignore sans avertissement) ;
 - un fichier suivi par Git n'est cité dans aucun `couvre` (un chemin finissant par `/` couvre un dossier) ni dans `memoire/_ignore.txt` ;
 - un fichier suivi par Git contient un secret probable (clé `sk-`, jeton GitHub, clé AWS, clé privée, en-tête `Bearer`). Une ligne contenant `secret-ok` est ignorée (faux positif assumé).
 

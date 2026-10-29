@@ -1,7 +1,8 @@
 ﻿# Génère memoire/ROUTEUR.md à partir des en-têtes des fichiers de memoire/.
 #   .\scripts\routeur.ps1             écrit memoire/ROUTEUR.md
 #   .\scripts\routeur.ps1 -Verifier   contrôle la cohérence sans rien écrire (code retour 1 si erreur) :
-#     erreurs       : routeur à jour, chemins 'couvre' existants, fichiers Git non couverts, secrets probables
+#     erreurs       : routeur à jour, chemins 'couvre' existants, JSON de configuration valide,
+#                     fichiers Git non couverts, secrets probables
 #     avertissements : mémoire plus ancienne que le code qu'elle couvre, budget de contexte dépassé
 # Uniquement des cmdlets : compatible avec le mode PowerShell restreint (Constrained Language Mode).
 param(
@@ -90,6 +91,15 @@ Aucune ligne ne correspond : lis ``memoire/architecture.md``, avertis l'utilisat
 $contenu = ($contenu -replace '\r?\n', "`n").TrimEnd() + "`n"
 
 if ($Verifier) {
+    # JSON de configuration : OpenCode ignore sans avertissement un opencode.json invalide
+    foreach ($fichierJson in @("opencode.json", ".opencode/opencode.json")) {
+        $cheminJson = Join-Path $Racine $fichierJson
+        if (Test-Path $cheminJson) {
+            try { $null = Get-Content $cheminJson -Raw -Encoding UTF8 | ConvertFrom-Json }
+            catch { $erreurs += "$fichierJson : JSON invalide, OpenCode l'ignore sans avertissement ($($_.Exception.Message))" }
+        }
+    }
+
     # Fichiers suivis par Git (la suite est ignorée hors dépôt Git)
     $suivis = @()
     if (Get-Command git -ErrorAction SilentlyContinue) {

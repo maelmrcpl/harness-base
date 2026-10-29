@@ -13,7 +13,7 @@ couvre: opencode.json, .gitignore, .github/workflows/memoire.yml, .opencode/
 | `.github/workflows/memoire.yml` | Lance `scripts/routeur.ps1 -Verifier` à chaque push et pull request (historique Git complet, nécessaire à la détection de péremption). |
 | `.opencode/skills/` | Skills `onboard` (remplir la mémoire d'un projet existant), `plan` (cadrer avant de coder), `review` (relecture). |
 | `.opencode/agents/reviewer.md` | Sous-agent relecteur en lecture seule, utilisé par `/review`. |
-| `.opencode/commands/` | Commandes `/onboard`, `/plan`, `/review`. Chacune charge le skill du même nom. |
+| `.opencode/commands/` | Commandes `/onboard`, `/plan`, `/review`, `/save-session`. Chacune charge le skill du même nom. |
 
 ## Configuration
 - `.gitignore` : fichiers exclus du dépôt.
